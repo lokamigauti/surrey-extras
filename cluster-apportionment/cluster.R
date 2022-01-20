@@ -25,14 +25,22 @@ get_statistics <- function(data, method, ...) {
   return(cluster.stats(d = dist(data), cluster$cluster, silhouette = T))
 }
 
-iterate_statistics_by_center <- function(data, method, range, ...) {
+get_alternative_sil <- function(data, method, ...) {
+  #` Alternative method to calculate silhouette for big datasets
+  #`
+  cluster <- run_cluster(data, method, ...)
+  return(distcritmulti(data, cluster$cluster))
+}
+
+iterate_statistics_by_center <- function(data, method, range, alternative = F, ...) {
   #` Calculate statistics for a range of centers
   #`
+  if(alternative == T) return(map(range, ~ get_alternative_sil(data, method, center = .x, ...)))
   range %>%
     map(~ get_statistics(data, method, center = .x, ...))
 }
 
-report_stats <- function(stats, save_path) {
+report_stats <- function(stats, save_path, alternative = F, alternative_stats = NULL) {
   #` Save Dunn, Avg. Silhouette and Silhouette plots
   #`
   range <- 1:length(stats)
@@ -75,6 +83,18 @@ report_stats <- function(stats, save_path) {
   }
   1:length(clus_sils) %>%
     walk(~ print_sils(.x, clus_sils))
+
+  if(alternative==T) {
+    clus_sils_alt <- map_dbl(range, ~ alternative_stats[[.x]]$crit.overall)
+    data.frame(k = stats_report$k, avg_sil = clus_sils_alt) %>%
+      ggplot(aes(x = k, y = avg_sil)) +
+        geom_point() +
+        geom_line() +
+        ggtitle("Average Silhouette", subtitle = "Using Hennig and Liao (2013) method for large datasets") +
+        xlab("Number of Clusters") +
+        ylab("Average Silhouette")
+    ggsave(paste0(save_path, "altsil.png"))
+  }
 }
 
 main <- function() {
@@ -82,8 +102,8 @@ main <- function() {
   kcluster_data <- data %>%
     select(-c(Timestamp, `MToF (us)`, `Period (s)`, `Flowrate (ml/s)`))
   stats <- iterate_statistics_by_center(kcluster_data, "k-means", 2:20)
-
-  report_stats(stats, OUTPUT_DIR)
+  alt_sil <- iterate_statistics_by_center(kcluster_data, "k-means", 2:20, alternative = T)
+  report_stats(stats, OUTPUT_DIR, alternative = T, alternative_stats = alt_sil)
 }
 
 if (interactive()) {
