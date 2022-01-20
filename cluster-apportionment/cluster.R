@@ -4,6 +4,7 @@ library(fpc)
 set.seed(42)
 FILE_DIR <- "G:/My Drive/IC/Doutorado/Sandwich/Data/PMF/"
 OUTPUT_DIR <- "G:/My Drive/IC/Doutorado/Sandwich/Output/PMF/"
+CLUSTERS_RANGE <- 2:20
 
 import_dataset <- function(data_path) {
   #` Import colocation dataset into a tibble
@@ -103,9 +104,9 @@ main <- function() {
   data <- import_dataset()
   kcluster_data <- data %>%
     select(-c(Timestamp, `MToF (us)`, `Period (s)`, `Flowrate (ml/s)`))
-  stats <- iterate_statistics_by_center(kcluster_data, "k-means", 2:20)
-  alt_sil <- iterate_statistics_by_center(kcluster_data, "k-means", 2:20, alternative = T)
-  report_stats(stats, OUTPUT_DIR, alternative = T, alternative_stats = alt_sil)
+  stats <- iterate_statistics_by_center(kcluster_data, "k-means", CLUSTERS_RANGE)
+  alt_sil <- iterate_statistics_by_center(kcluster_data, "k-means", CLUSTERS_RANGE, alternative = T)
+  report_stats(stats, OUTPUT_DIR, plot_avg_per_cluster = F, alternative = T, alternative_stats = alt_sil)
 }
 
 if (interactive()) {
