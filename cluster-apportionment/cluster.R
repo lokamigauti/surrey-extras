@@ -40,7 +40,7 @@ iterate_statistics_by_center <- function(data, method, range, alternative = F, .
     map(~ get_statistics(data, method, center = .x, ...))
 }
 
-report_stats <- function(stats, save_path, alternative = F, alternative_stats = NULL) {
+report_stats <- function(stats, save_path, plot_avg_per_cluster = F, alternative = F, alternative_stats = NULL) {
   #` Save Dunn, Avg. Silhouette and Silhouette plots
   #`
   range <- 1:length(stats)
@@ -69,22 +69,24 @@ report_stats <- function(stats, save_path, alternative = F, alternative_stats = 
       ylab("Average Silhouette")
   ggsave(paste0(save_path, "avgsil.png"))
 
-  print_sils <- function(n, clus_sils) {
-    len <- length(clus_sils[[n]])
-    clus_sils[[n]] %>%
-      as.data.frame() %>%
-      ggplot(aes(y = ., x = 1:len)) +
-        geom_col() +
-        ggtitle(glue::glue("Silhouette with {len} clusters")) +
-        xlab("Cluster Number") +
-        ylab("Silhouette")
+  if(plot_avg_per_cluster == T) {
+      print_sils <- function(n, clus_sils) {
+        len <- length(clus_sils[[n]])
+        clus_sils[[n]] %>%
+          as.data.frame() %>%
+          ggplot(aes(y = ., x = 1:len)) +
+            geom_col() +
+            ggtitle(glue::glue("Silhouette with {len} clusters")) +
+            xlab("Cluster Number") +
+            ylab("Silhouette")
 
-    ggsave(paste0(save_path, "sil", len,".png"))
+        ggsave(paste0(save_path, "sil", len,".png"))
+      }
+    1:length(clus_sils) %>%
+      walk(~ print_sils(.x, clus_sils))
   }
-  1:length(clus_sils) %>%
-    walk(~ print_sils(.x, clus_sils))
 
-  if(alternative==T) {
+  if(alternative == T) {
     clus_sils_alt <- map_dbl(range, ~ alternative_stats[[.x]]$crit.overall)
     data.frame(k = stats_report$k, avg_sil = clus_sils_alt) %>%
       ggplot(aes(x = k, y = avg_sil)) +
