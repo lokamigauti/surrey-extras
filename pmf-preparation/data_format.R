@@ -22,7 +22,7 @@ import_data <- function(file_path = FILE_DIR) {
 main <- function() {
   data <- import_data() %>%
     arrange(Timestamp)
-  data[is.na(data)] <- -99999
+  data[is.na(data)] <- -999
   data_unc <- data %>%
     mutate(across(!Timestamp, function(x) return(0.1))) # PMF do not accept 0 uncertainty
 
