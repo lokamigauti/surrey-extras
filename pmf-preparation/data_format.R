@@ -3,26 +3,26 @@ library(tidyverse)
 FILE_DIR <- "G:/My Drive/IC/Doutorado/Sandwich/Data/PMF/"
 
 append_file <- function(data, filepaths) {
-  first_interaction <- missing(data)
-
-  if(length(filepaths) == 0) return(data) # stop condition
-
+  if(length(filepaths) == 0) return(data)
   filepaths[1] %>%
     read_csv(col_types = cols(Timestamp = col_datetime(format = "%Y-%m-%d %H:%M:%S"))) %>%
-    {if(!first_interaction) bind_rows(data) else .} %>%
-    append_file(filepaths = filepaths[-1]) %>%
+    bind_rows(data) %>%
+    append_file(filepaths = filepaths[-1]) %>% 
     return()
 }
 
 import_data <- function(file_path = FILE_DIR) {
   filepaths <- list.files(file_path, full.names = T, pattern = "*.csv")
-  return(append_file(filepaths = filepaths))
+  data <- filepaths[1] %>%
+    read_csv(col_types = cols(Timestamp = col_datetime(format = "%Y-%m-%d %H:%M:%S")))
+  data <- append_file(data = data, filepaths = filepaths)
+  return(data)
 }
 
 main <- function() {
   data <- import_data()
   data_unc <- data %>%
-    mutate(across(!Timestamp, function(x) return(0.1)))
+    mutate(across(!Timestamp, function(x) return(0.1))) # PMF do not accept 0 uncertainty
 
   data %>%
     write_csv(paste0(FILE_DIR, "Formatted/data.csv"))
