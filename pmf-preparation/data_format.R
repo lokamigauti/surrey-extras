@@ -24,7 +24,7 @@ main <- function() {
     arrange(Timestamp)
   data[is.na(data)] <- -999
   data_unc <- data %>%
-    mutate(across(!Timestamp, function(x) return(0.1))) # PMF do not accept 0 uncertainty
+    mutate(across(!Timestamp, function(x) return(0.000001))) # PMF do not accept 0 uncertainty
 
   data %>%
     write_csv(paste0(FILE_DIR, "Formatted/data.csv"))
